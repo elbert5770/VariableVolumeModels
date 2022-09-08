@@ -125,7 +125,7 @@ function main(solution_method_drain,solution_method_fill,start_with_drain,short_
     end
 
 
-    for j = 1:1*number_of_days
+    for j = 1:2*number_of_days
         if j > 14
             γP = 0.0 # Cesium contaminated grain is fed for 7 days or 14 milking cycles
             P = [γP,0.0]   
@@ -165,7 +165,7 @@ function main(solution_method_drain,solution_method_fill,start_with_drain,short_
                     integral, err = quadgk(x -> calcouterint(x,p,invV,R), 0.0, t)     
                     x = invG*integral*P + invG*G0*x0
                     y = V*x
-                    @show t, calcintinvVR(t,p,R), calcintinvVdVdt(t,p), invG, invV, calcouterint(t,p,invV,R)
+                   # @show t, calcintinvVR(t,p,R), calcintinvVdVdt(t,p), invG, invV, calcouterint(t,p,invV,R)
                 end
                 #####
 
@@ -223,16 +223,18 @@ function main(solution_method_drain,solution_method_fill,start_with_drain,short_
 
     #   p2 = plot(timeDE',valueplotDE,legend=false,ylim=(0,31),label=["Cesium blood conc" "Cesium milk mass" "Cesium milk conc" "udder volume"])
     
-    p3 = scatter(time,valueplotx[:,2] ,markersize=1,markerstrokewidth=0,markercolor=:blue)
-    scatter!(p3,timeDE', valueplotDE[:,3] ,markersize=1,markerstrokewidth=0,markercolor=:red,legend=false)
-    scatter!(p3,time,volume,markersize=1,markerstrokewidth=0)
-    scatter!(p3,timeDE',valueplotDE[:,4],markersize=1,markerstrokewidth=0)
+    p3 = scatter(time,valueplotx[:,2] ,markersize=1,markerstrokewidth=0,markercolor=:blue,label="Conc (exact)",legendfontsize=5)
+    scatter!(p3,timeDE', valueplotDE[:,3] ,markersize=1,markerstrokewidth=0,markercolor=:red,label="Conc (ODEsolve)")
+    scatter!(p3,time,volume,markersize=1,markerstrokewidth=0,label="Volume")
+    #scatter!(p3,timeDE',valueplotDE[:,4],markersize=1,markerstrokewidth=0)
     # scatter!(p3,time,valueplotx[:,1],markersize=1,markercolor=:yellow,markerstrokewidth=0)
     # scatter!(p3,timeDE',valueplotDE[:,1],markersize=1,markercolor=:green,markerstrokewidth=0)
-   
-    p4 = scatter(time,valueploty[:,2],markersize=1,markerstrokewidth=0,markercolor=:blue,legend=false)
-    scatter!(p4,timeDE', valueplotDE[:,2],markersize=1,markercolor=:red,markerstrokewidth=0)
-
+   xlabel!(p3,"Time (h)")
+   ylabel!(p3,"Concentration or volume")
+    p4 = scatter(time,valueploty[:,2],markersize=1,markerstrokewidth=0,markercolor=:blue,label="Exact",legendfontsize=6)
+    scatter!(p4,timeDE', valueplotDE[:,2],markersize=1,markercolor=:red,markerstrokewidth=0,label="ODEsolve")
+    xlabel!(p4,"Time (h)")
+    ylabel!(p4,"Amount")
     display(plot(p3,p4,layout=(1,2)))
 end
 
@@ -287,9 +289,9 @@ end
 #### 2 = Solution calculated from dVx/dt = P + Rx as separable equation
 #### Worse than 0 for fill, better than 1 for drain
 solution_method_drain = 0
-solution_method_fill = 0
+solution_method_fill = 1
 start_with_drain = true
-short_simulation = true
+short_simulation = false
 fast_milking = false
 main(solution_method_drain,solution_method_fill,start_with_drain,short_simulation,fast_milking)
 
