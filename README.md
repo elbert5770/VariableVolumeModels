@@ -1,5 +1,5 @@
 # VariableVolumeModels
-Variable volume compartmental models in Julia - improving computational accuracy of exact solutions.
+Variable volume compartmental models in Julia - understanding computational accuracy of exact solutions.
 
 The model is inspired by the following work: http://www.physics.uoi.gr/assimakopoulos/files/scientific_papers/39_Health_Physics_61_(1991)_245-253.pdf
 
