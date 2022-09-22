@@ -2,69 +2,36 @@ using QuadGK
 using GLMakie
 using DifferentialEquations
 
-
-function calcRintinvV(t,p,R)
-   # Calculate R*Integrate[inv(V)]
-    intinvV = calcintinvV(t,p)
-    RintinvV = R*intinvV
-    return RintinvV
-end
-
-function calcexpnegRintinvV(t,p,R)
-    # Calculate exp(-R*Integrate[inv(V)])
-    return exp(-calcRintinvV(t,p,R))
-end
-
-function mat_exp(A)
-    # Exact calculation of matrix exponentials for a 2x2 matrix, has no noticable effect on solution
-    a = A[1,1]
-    b = A[1,2]
-    c = A[2,1]
-    d = A[2,2]
-
-    B = 1/2*sqrt((a-d)^2 + 4*b*c)
-    if B == 0.0
-        RV = [1.0 0.0;0.0 1.0]
-    else
-        RV = exp((a+d)/2).*[cosh(B)+(a-d)/(2*B)*sinh(B) b/B*sinh(B);c/B*sinh(B) cosh(B)-(a-d)/(2*B)*sinh(B)]
-    end
-    return RV
-end
-
-function calcintinvVR(t,p,R)
-   # Calculate Integrate[inv(V)]*R
-    intinvV = calcintinvV(t,p)
-    intinvVR = intinvV*R
-    return intinvVR
-end
-
-function calcouterint(t,p,invV,R)
-    # Calculate G*inv(V) for solution method 0
-    G = exp(calcintinvVdVdt(t,p) - calcintinvVR(t,p,R))
-    GinvV = G*invV
-    return GinvV
-end
-
-
-function variable_volume!(dy,y, p, t) 
+function variable_volume!(dy,y,p,t) 
     # Equations for ODE solver
 
     V1,a,b1,b2,ξ1,μ2,λ2,γP = p
+    # V1 volume of body
+    # a volume of milk at time = 0
+    # b1 rate of fluid flow from body to udder
+    # b2 rate of milk flow out of udder
+    # ξ1 rate of cesium clearance volume/time
+    # μ2 rate of receptor or channel-mediated transfer of cesium from udder to body volume/time
+    # λ2 rate of receptor or channel-mediated transfer of cesium from body to udder volume/time
+    # γP rate of absorption of cesium from contaminated grain through intestines Bq/volume/day
+    # Note that fluid intake and V1 are constant, so more milk production would be balanced by 
+    # less production of urine or feces
 
-    dy[1] = (γP + (μ2*y[3] -(λ2+ξ1+b1)*y[1]))/V1
-    dy[2] = (-μ2*y[3] + λ2*y[1]) + b1*y[1] +b2*y[3]
-    dy[3] = 1/y[4]*dy[2] - y[2]/y[4]^2*(b1+b2)
-    dy[4] = b1+b2   
+    dy[1] = (γP + (μ2*y[3] -(λ2+ξ1+b1)*y[1]))/V1 # Body Cesium concentration Bq/volume/day
+    dy[2] = (-μ2*y[3] + λ2*y[1]) + b1*y[1] +b2*y[3] # Milk Cesium amount Bq/day
+    dy[3] = 1/y[4]*dy[2] - y[2]/y[4]^2*(b1+b2) # Milk Cesium concentration Bq/volume/day
+    dy[4] = b1+b2   # Rate of change of udder volume
 end
 
-function main(fig,toggles,labels,menu1,menu2,ax,ax2,solution_method_drain,solution_method_fill,start_with_drain,short_simulation,fast_milking)
+
+function main(ax,ax2,solution_method_drain,solution_method_fill,start_with_drain,short_simulation,fast_milking)
     
     @show fast_milking
     @show start_with_drain
     @show short_simulation
     #### Constants and settings
     hour_per_day = 24.0 # rate constants given in units of vol/day
-    V1 = 33.0 # L
+    V1 = 33.0 # L Body volume
     a1 = 0.09 # L
     b1 = 2.2/hour_per_day # L/h
 
@@ -236,6 +203,8 @@ end
 
 function create_figure()
     fig = Figure(resolution = (1400, 800))
+
+    # Toggles for boolean variables
     toggle_choices = ["Short simulation","Start with drain","Fast milking"]
     toggles = [Toggle(fig, active=false);
             Toggle(fig,active=true);
@@ -244,7 +213,7 @@ function create_figure()
     fig[1,3] = grid!(hcat(toggles,labels),tellheight=false)
 
 
-
+    # Menus for exact solution methods
     solution_method_drains = [1,2,3]
     solution_method_fills = [1,2,3]
     menu1 = Menu(fig, options = zip(["Conc. Integ. Factor", "Mass Integ. Factor", "Conc. Separable"],solution_method_drains), default = "Conc. Integ. Factor")
@@ -255,13 +224,19 @@ function create_figure()
     Label(fig, "Fill", width = nothing),
     menu2;
     tellheight = false, width = 200)
-    ax = Axis(fig[:,1],xlabel="Time (h)",ylabel="Concentration or volume",title="Concentration of tracer")
-    ax2 = Axis(fig[:,2],xlabel="Time (h)",ylabel="Mass or volume",title="Mass of tracer")
+
+    # Create axes for two plots
+    ax = Axis(fig[:,1],xlabel="Time (h)",ylabel="Concentration or volume",title="Concentration of cesium in milk")
+    ax2 = Axis(fig[:,2],xlabel="Time (h)",ylabel="Mass or volume",title="'Mass' (i.e. amount) of cesium in milk")
+    
+    # Create legend
     elem_1 = [MarkerElement(color = :blue, marker=:CIRCLE, markersize = 12)]
     elem_2 = [MarkerElement(color = :red, marker=:CIRCLE, markersize = 12)]
     elem_3 = [MarkerElement(color = :orange, marker=:CIRCLE, markersize = 12)]
     axislegend(ax, [elem_1, elem_2, elem_3], ["Matrix Exponential", "Numerical soln.", "Volume"], position = :lt)
     axislegend(ax2, [elem_1, elem_2,elem_3], ["Matrix Exponential", "Numerical soln.", "Volume"], position = :lt)
+
+    # Show diff eq forms
     Label(fig[2,3],"Diff. Eq. w/concentration")
     Label(fig[3,3],L"V\frac{d\mathbf{C}}{dt}+C\frac{d\mathbf{V}}{dt}=\mathbf{P}+\mathbf{RC}")
     Label(fig[4,3],"Diff. Eq. w/mass")
@@ -271,6 +246,34 @@ function create_figure()
     
     return pfig
 end
+
+### Functions to calculate terms in solutions
+
+function calcRintinvV(t,p,R)
+    # Calculate R*Integrate[inv(V)]
+     intinvV = calcintinvV(t,p)
+     RintinvV = R*intinvV
+     return RintinvV
+ end
+ 
+ function calcexpnegRintinvV(t,p,R)
+     # Calculate exp(-R*Integrate[inv(V)])
+     return exp(-calcRintinvV(t,p,R))
+ end
+ 
+ function calcintinvVR(t,p,R)
+    # Calculate Integrate[inv(V)]*R
+     intinvV = calcintinvV(t,p)
+     intinvVR = intinvV*R
+     return intinvVR
+ end
+ 
+ function calcouterint(t,p,invV,R)
+     # Calculate G*inv(V) for solution method 0
+     G = exp(calcintinvVdVdt(t,p) - calcintinvVR(t,p,R))
+     GinvV = G*invV
+     return GinvV
+ end
 
 function calcR(p)
     # R = reaction rates (including flows btwn compartments), time invariant
@@ -314,20 +317,39 @@ function calcintinvVdVdt(t,p)
     return intinvVdVdt
 end
 
+function mat_exp(A)
+    # Exact calculation of matrix exponentials for a 2x2 matrix, has no noticable effect on solution
+    # and is not used here
+    a = A[1,1]
+    b = A[1,2]
+    c = A[2,1]
+    d = A[2,2]
+
+    B = 1/2*sqrt((a-d)^2 + 4*b*c)
+    if B == 0.0
+        RV = [1.0 0.0;0.0 1.0]
+    else
+        RV = exp((a+d)/2).*[cosh(B)+(a-d)/(2*B)*sinh(B) b/B*sinh(B);c/B*sinh(B) cosh(B)-(a-d)/(2*B)*sinh(B)]
+    end
+    return RV
+end
 
 #### Form of the exact solution affects accuracy
 #### Exact solutions assume that R, P and dV/dt are not functions of t
 #### 1 = Solution calculated from dVx/dt = P + Rx with integrating factor
-#### Almost identical to numerical soln for drain period, somewhat off for fill period
+####    Almost identical to numerical soln during drain period, somewhat off for fill period
 #### 2 = Solution calculated from dy/dt = P + RV^(-1)y with integrating factor
-#### Almost identical to numerical soln for fill period, not close for drain period
+####    Almost identical to numerical soln for fill period, not close for drain period
 #### 3 = Solution calculated from dVx/dt = P + Rx as separable equation
-#### Worse than 0 for fill, better than 1 for drain
+####    Worse than 1 for fill, better than 2 for drain
+
+# Default values
 # solution_method_drain = 1
 # solution_method_fill = 2
 # start_with_drain = true
-# short_simulation = true
+# short_simulation = false
 # fast_milking = false
+
 pfig = create_figure()
 fig,toggles,labels,menu1,menu2,ax,ax2 =pfig
 display(fig)
@@ -336,26 +358,28 @@ start_with_drain=toggles[2].active
 fast_milking=toggles[3].active
 solution_method_drain = menu1.selection
 solution_method_fill = menu2.selection
+
+
+main(ax,ax2,solution_method_drain,solution_method_fill,start_with_drain,short_simulation,fast_milking)
+
 on(menu1.selection) do s
     solution_method_drain = s
-    main(fig,toggles,labels,menu1,menu2,ax,ax2,solution_method_drain,solution_method_fill,start_with_drain,short_simulation,fast_milking)
+    main(ax,ax2,solution_method_drain,solution_method_fill,start_with_drain,short_simulation,fast_milking)
 end
 on(menu2.selection) do s
     solution_method_fill = s
-    main(fig,toggles,labels,menu1,menu2,ax,ax2,solution_method_drain,solution_method_fill,start_with_drain,short_simulation,fast_milking)
+    main(ax,ax2,solution_method_drain,solution_method_fill,start_with_drain,short_simulation,fast_milking)
 end
 
-
-main(fig,toggles,labels,menu1,menu2,ax,ax2,solution_method_drain,solution_method_fill,start_with_drain,short_simulation,fast_milking)
 on(toggles[1].active) do val
     short_simulation=toggles[1].active 
-    main(fig,toggles,labels,menu1,menu2,ax,ax2,solution_method_drain,solution_method_fill,start_with_drain,short_simulation,fast_milking)
+    main(ax,ax2,solution_method_drain,solution_method_fill,start_with_drain,short_simulation,fast_milking)
 end
 on(toggles[2].active) do val
     start_with_drain=toggles[2].active 
-    main(fig,toggles,labels,menu1,menu2,ax,ax2,solution_method_drain,solution_method_fill,start_with_drain,short_simulation,fast_milking)
+    main(ax,ax2,solution_method_drain,solution_method_fill,start_with_drain,short_simulation,fast_milking)
 end
 on(toggles[3].active) do val
     fast_milking=toggles[3].active 
-    main(fig,toggles,labels,menu1,menu2,ax,ax2,solution_method_drain,solution_method_fill,start_with_drain,short_simulation,fast_milking)
+    main(ax,ax2,solution_method_drain,solution_method_fill,start_with_drain,short_simulation,fast_milking)
 end
