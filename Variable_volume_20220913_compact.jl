@@ -257,9 +257,9 @@ function create_figure()
     tellheight = false, width = 200)
     ax = Axis(fig[:,1],xlabel="Time (h)",ylabel="Concentration or volume",title="Concentration of tracer")
     ax2 = Axis(fig[:,2],xlabel="Time (h)",ylabel="Mass or volume",title="Mass of tracer")
-    elem_1 = [MarkerElement(color = :blue, marker=:Circle, markersize = 12)]
-    elem_2 = [MarkerElement(color = :red, marker=:Circle, markersize = 12)]
-    elem_3 = [MarkerElement(color = :orange, marker=:Circle, markersize = 12)]
+    elem_1 = [MarkerElement(color = :blue, marker=:CIRCLE, markersize = 12)]
+    elem_2 = [MarkerElement(color = :red, marker=:CIRCLE, markersize = 12)]
+    elem_3 = [MarkerElement(color = :orange, marker=:CIRCLE, markersize = 12)]
     axislegend(ax, [elem_1, elem_2, elem_3], ["Matrix Exponential", "Numerical soln.", "Volume"], position = :lt)
     axislegend(ax2, [elem_1, elem_2,elem_3], ["Matrix Exponential", "Numerical soln.", "Volume"], position = :lt)
     Label(fig[2,3],"Diff. Eq. w/concentration")
@@ -267,7 +267,7 @@ function create_figure()
     Label(fig[4,3],"Diff. Eq. w/mass")
     Label(fig[5,3],L"\frac{d\mathbf{M}}{dt}=\mathbf{P}+\mathbf{RV}^{-1}\mathbf{M}")
    
-    pfig = fig,toggles,labels,menu1,menu2,ax,ax2,solution_method_drain,solution_method_fill
+    pfig = fig,toggles,labels,menu1,menu2,ax,ax2
     
     return pfig
 end
@@ -329,25 +329,27 @@ end
 # short_simulation = true
 # fast_milking = false
 pfig = create_figure()
-fig,toggles,labels,menu1,menu2,ax,ax2,solution_method_drain,solution_method_fill =pfig
+fig,toggles,labels,menu1,menu2,ax,ax2 =pfig
 display(fig)
 short_simulation=toggles[1].active
 start_with_drain=toggles[2].active
 fast_milking=toggles[3].active
+solution_method_drain = menu1.selection
+solution_method_fill = menu2.selection
 on(menu1.selection) do s
     solution_method_drain = s
     main(fig,toggles,labels,menu1,menu2,ax,ax2,solution_method_drain,solution_method_fill,start_with_drain,short_simulation,fast_milking)
 end
 on(menu2.selection) do s
     solution_method_fill = s
-    main(fig,toggles,labels,menu1,menu2,ax,solution_method_drain,solution_method_fill,start_with_drain,short_simulation,fast_milking)
+    main(fig,toggles,labels,menu1,menu2,ax,ax2,solution_method_drain,solution_method_fill,start_with_drain,short_simulation,fast_milking)
 end
 
 
 main(fig,toggles,labels,menu1,menu2,ax,ax2,solution_method_drain,solution_method_fill,start_with_drain,short_simulation,fast_milking)
 on(toggles[1].active) do val
     short_simulation=toggles[1].active 
-    main(fig,toggles,labels,menu1,menu2,ax,solution_method_drain,solution_method_fill,start_with_drain,short_simulation,fast_milking)
+    main(fig,toggles,labels,menu1,menu2,ax,ax2,solution_method_drain,solution_method_fill,start_with_drain,short_simulation,fast_milking)
 end
 on(toggles[2].active) do val
     start_with_drain=toggles[2].active 
