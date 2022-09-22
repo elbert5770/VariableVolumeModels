@@ -5,7 +5,7 @@ The model is inspired by the following work: http://www.physics.uoi.gr/assimakop
 
 The paper is in need of some corrections.  In equation 1, the $x_i$ in the first term on the right hand side should be $x_j$.  In equation 19, $G^{-1}C$ is unnecessary due to the use of a definite integral and should be just $y_0$.  Equation 23 should be zero.  The integral of 1/(alpha + beta t) is incorrect in equation B2.
 
-At a fundamental level, the volumetric flow of liquid into the udder will carry radioisotope from the body to the milk.  The mass of radioisotope will decrease as milk leaves the sheep.  These flows really need to be in the equations and are added here.
+At a fundamental level, the volumetric flow of liquid into the udder will carry radioisotope from the body to the milk.  The mass of radioisotope will decrease as milk leaves the sheep.  These flows really need to be in the equations and are added in this work (b1 and b2, see differential equations in the program).
 
 x = concentration of cesium (Bq/vol)
 

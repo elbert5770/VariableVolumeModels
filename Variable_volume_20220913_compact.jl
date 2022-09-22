@@ -1,3 +1,11 @@
+#The model is inspired by the following work: 
+# http://www.physics.uoi.gr/assimakopoulos/files/scientific_papers/39_Health_Physics_61_(1991)_245-253.pdf
+# However, the model in the paper does not consistently account for flow of liquid from body to the udder to produce
+# milk.  This is important because it is unlikely that the cesium wouldn't be secreted into the milk - it is an ion.
+# Thus, there needs to be some mass balance where the flow that fills the udder carries cesium with it, as
+# is done below (b1).  b2 represents milking - it is either on or off.  Secretion continues even during milking,
+# which is biological.  The exchange represented by μ2 and λ2 are in the original model, but have values that
+# are too small to affect the results.  They are included for completeness.
 using QuadGK
 using GLMakie
 using DifferentialEquations
@@ -18,7 +26,7 @@ function variable_volume!(dy,y,p,t)
     # less production of urine or feces
 
     dy[1] = (γP + (μ2*y[3] -(λ2+ξ1+b1)*y[1]))/V1 # Body Cesium concentration Bq/volume/day
-    dy[2] = (-μ2*y[3] + λ2*y[1]) + b1*y[1] +b2*y[3] # Milk Cesium amount Bq/day
+    dy[2] = -μ2*y[3] + λ2*y[1] + b1*y[1] +b2*y[3] # Milk Cesium amount Bq/day
     dy[3] = 1/y[4]*dy[2] - y[2]/y[4]^2*(b1+b2) # Milk Cesium concentration Bq/volume/day
     dy[4] = b1+b2   # Rate of change of udder volume
 end
