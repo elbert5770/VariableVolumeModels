@@ -263,9 +263,9 @@ function create_figure()
     axislegend(ax, [elem_1, elem_2, elem_3], ["Matrix Exponential", "Numerical soln.", "Volume"], position = :lt)
     axislegend(ax2, [elem_1, elem_2,elem_3], ["Matrix Exponential", "Numerical soln.", "Volume"], position = :lt)
     Label(fig[2,3],"Diff. Eq. w/concentration")
-    Label(fig[3,3],L"V\frac{d\mathbf{C}}{dt}+C\frac{d\mathbf{V}}{dt}=\mathbf{P}+\mathbf{QC}")
+    Label(fig[3,3],L"V\frac{d\mathbf{C}}{dt}+C\frac{d\mathbf{V}}{dt}=\mathbf{P}+\mathbf{RC}")
     Label(fig[4,3],"Diff. Eq. w/mass")
-    Label(fig[5,3],L"\frac{d\mathbf{M}}{dt}=\mathbf{P}+\mathbf{QV}^{-1}\mathbf{M}")
+    Label(fig[5,3],L"\frac{d\mathbf{M}}{dt}=\mathbf{P}+\mathbf{RV}^{-1}\mathbf{M}")
    
     pfig = fig,toggles,labels,menu1,menu2,ax,ax2,solution_method_drain,solution_method_fill
     
