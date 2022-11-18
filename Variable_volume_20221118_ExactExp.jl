@@ -132,7 +132,7 @@ function main(ax,ax2,solution_method_drain,solution_method_fill,start_with_drain
             R = calcR(p) # Reaction rates depend on parameters but not time
             dVdt = calcdVdt(p) # dV/dt depends on paramters but not time
             t = 0.0
-            G0 = exponential!(calcintinvVdVdt(t,p) - calcintinvVR(t,p,R)) # Integrating factor at time = 0
+            G0 = mat_exp(calcintinvVdVdt(t,p) - calcintinvVR(t,p,R)) # Integrating factor at time = 0
         
             for t = 0.0:delt:tmax
                 V = calcV(t,p) # Volume of compartments at time = t
@@ -140,7 +140,7 @@ function main(ax,ax2,solution_method_drain,solution_method_fill,start_with_drain
 
                 ##### Solution calculated from dVx/dt = P + Rx with integrating factor
                 if solution_method == 1
-                    invG = exponential!(calcintinvVR(t,p,R) - calcintinvVdVdt(t,p))
+                    invG = mat_exp(calcintinvVR(t,p,R) - calcintinvVdVdt(t,p))
                     integral, err = quadgk(x -> calcouterint(x,p,invV,R), 0.0, t)     
                     x = invG*integral*P + invG*G0*x0
                     y = V*x
@@ -150,7 +150,7 @@ function main(ax,ax2,solution_method_drain,solution_method_fill,start_with_drain
 
                 ##### Solution calculated from dy/dt = P + RV^(-1)y with integrating factor
                 if solution_method == 2
-                    expRintinvV = exponential!(calcRintinvV(t,p,R))
+                    expRintinvV = mat_exp(calcRintinvV(t,p,R))
                     integral, err = quadgk(x -> calcexpnegRintinvV(x,p,R), 0.0, t)
                     x = inv(V)*expRintinvV*(integral*P + V0*x0 )
                     y = expRintinvV*(integral*P + y0 )
@@ -160,7 +160,7 @@ function main(ax,ax2,solution_method_drain,solution_method_fill,start_with_drain
 
                 ##### Solution calculated from dVx/dt = P + Rx as separable equation
                 if solution_method == 3
-                    invG = exponential!((R-dVdt)*calcintinvV(t,p))
+                    invG = mat_exp((R-dVdt)*calcintinvV(t,p))
                     x = inv(R-dVdt)*(invG*(P+(R-dVdt)*x0) - P)
                     y = V*x
                 end
@@ -266,8 +266,8 @@ function calcRintinvV(t,p,R)
  end
  
  function calcexpnegRintinvV(t,p,R)
-     # Calculate exponential!(-R*Integrate[inv(V)])
-     return exponential!(-calcRintinvV(t,p,R))
+     # Calculate mat_exp(-R*Integrate[inv(V)])
+     return mat_exp(-calcRintinvV(t,p,R))
  end
  
  function calcintinvVR(t,p,R)
@@ -279,7 +279,7 @@ function calcRintinvV(t,p,R)
  
  function calcouterint(t,p,invV,R)
      # Calculate G*inv(V) for solution method 0
-     G = exponential!(calcintinvVdVdt(t,p) - calcintinvVR(t,p,R))
+     G = mat_exp(calcintinvVdVdt(t,p) - calcintinvVR(t,p,R))
      GinvV = G*invV
      return GinvV
  end
@@ -326,22 +326,22 @@ function calcintinvVdVdt(t,p)
     return intinvVdVdt
 end
 
-# function mat_exp(A)
-#     # Exact calculation of matrix exponentials for a 2x2 matrix, has no noticable effect on solution
-#     # and is not used here
-#     a = A[1,1]
-#     b = A[1,2]
-#     c = A[2,1]
-#     d = A[2,2]
+function mat_exp(A)
+    # Exact calculation of matrix exponentials for a 2x2 matrix, has no noticable effect on solution
+    # and is not used here
+    a = A[1,1]
+    b = A[1,2]
+    c = A[2,1]
+    d = A[2,2]
 
-#     B = 1/2*sqrt((a-d)^2 + 4*b*c)
-#     if B == 0.0
-#         RV = [1.0 0.0;0.0 1.0]
-#     else
-#         RV = exp((a+d)/2).*[cosh(B)+(a-d)/(2*B)*sinh(B) b/B*sinh(B);c/B*sinh(B) cosh(B)-(a-d)/(2*B)*sinh(B)]
-#     end
-#     return RV
-# end
+    B = 1/2*sqrt((a-d)^2 + 4*b*c)
+    if B == 0.0
+        RV = [1.0 0.0;0.0 1.0]
+    else
+        RV = exp((a+d)/2).*[cosh(B)+(a-d)/(2*B)*sinh(B) b/B*sinh(B);c/B*sinh(B) cosh(B)-(a-d)/(2*B)*sinh(B)]
+    end
+    return RV
+end
 
 #### Form of the exact solution affects accuracy
 #### Exact solutions assume that R, P and dV/dt are not functions of t
